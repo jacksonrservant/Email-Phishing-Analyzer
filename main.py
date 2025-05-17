@@ -1,7 +1,14 @@
 import os
+import json
 import email
 from email import policy
 from email.parser import BytesParser
+import xlsxwriter
+from fpdf import FPDF
+from datetime import datetime
+
+OUTPUT_DIR = "output"
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 def load_eml_file(file_path):
     try:
@@ -13,7 +20,7 @@ def load_eml_file(file_path):
         return None
 
 def extract_email_metadata(msg):
-    metadata = {
+    return {
         'From': msg['From'],
         'To': msg['To'],
         'Subject': msg['Subject'],
@@ -23,7 +30,6 @@ def extract_email_metadata(msg):
         'Received-SPF': msg['Received-SPF'],
         'Authentication-Results': msg['Authentication-Results'],
     }
-    return metadata
 
 def extract_auth_results(auth_header):
     results = {'SPF': None, 'DKIM': None, 'DMARC': None}
@@ -61,44 +67,29 @@ def analyze_phishing_indicators(msg):
 
     return indicators
 
-def print_analysis_report(file_path, metadata, auth_results, indicators):
-    print(f"\n📨 Analyzing: {file_path}")
-    print("\n--- Email Metadata ---")
+def export_to_json(metadata, auth_results, indicators, verdict, export_path):
+    output = {
+        "metadata": metadata,
+        "auth_results": auth_results,
+        "indicators": indicators,
+        "verdict": verdict
+    }
+    with open(export_path, "w") as f:
+        json.dump(output, f, indent=4)
+
+def export_to_excel(metadata, auth_results, indicators, verdict, export_path):
+    workbook = xlsxwriter.Workbook(export_path)
+    worksheet = workbook.add_worksheet("Phishing Analysis")
+
+    bold = workbook.add_format({'bold': True})
+    row = 0
+
+    worksheet.write(row, 0, "Metadata", bold)
+    row += 1
     for key, value in metadata.items():
-        print(f"{key}: {value}")
+        worksheet.write(row, 0, key)
+        worksheet.write(row, 1, value
 
-    print("\n--- Authentication Results ---")
-    for method, result in auth_results.items():
-        print(f"{method}: {result if result else 'Not found'}")
-
-    print("\n--- Phishing Indicators ---")
-    if indicators:
-        for ind in indicators:
-            print(f"[!] {ind}")
-    else:
-        print("[✓] No strong phishing indicators found.")
-
-    print("\n--- Verdict ---")
-    if indicators or any(v != 'pass' for v in auth_results.values() if v):
-        print(" Suspicious email detected. Proceed with caution.")
-    else:
-        print(" Email appears safe based on current analysis.")
-
-def main():
-    file_path = "input_samples/suspicious_email.eml"  # change to your file path
-    msg = load_eml_file(file_path)
-
-    if not msg:
-        return
-
-    metadata = extract_email_metadata(msg)
-    auth_results = extract_auth_results(metadata.get('Authentication-Results', ''))
-    indicators = analyze_phishing_indicators(msg)
-
-    print_analysis_report(file_path, metadata, auth_results, indicators)
-
-if __name__ == "__main__":
-    main()
 
 
 
