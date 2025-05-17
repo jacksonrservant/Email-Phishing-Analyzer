@@ -9,6 +9,7 @@ from src.analyzer import analyze, generate_summary
 from src.url_checker import analyze_urls
 from src.report_generator import export_to_excel
 from src.utils import ensure_output_dir, get_timestamped_filename
+from src.pdf_generator import export_to_pdf
 
 def main():
     parser = argparse.ArgumentParser(
@@ -43,6 +44,10 @@ def main():
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(parsed_data, f, indent=2)
         print(f"[✓] JSON report saved to {json_path}")
+
+    print("[+] Exporting PDF report...")
+    export_to_pdf(parsed_data)
+
 
     print("[✓] Analysis complete.")
 
