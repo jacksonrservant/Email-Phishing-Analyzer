@@ -31,3 +31,31 @@ def analyze(parsed_data):
 
     parsed_data["phishing_warnings"] = flags
     return parsed_data
+
+    # Add at the bottom of analyzer.py
+
+def generate_summary(parsed_data):
+    warnings = parsed_data.get("phishing_warnings", [])
+    url_analysis = parsed_data.get("url_analysis", [])
+
+    num_flags = len(warnings)
+    num_suspicious_urls = sum("clean" not in item.lower() for item in url_analysis)
+
+    if num_flags >= 3 or num_suspicious_urls >= 2:
+        threat_level = "High"
+        recommendation = " Likely phishing. Do not interact. Report to your security team immediately."
+    elif num_flags > 0 or num_suspicious_urls == 1:
+        threat_level = "Medium"
+        recommendation = " Suspicious. Review carefully before interacting. Consider reporting."
+    else:
+        threat_level = "Low"
+        recommendation = " No obvious phishing indicators. Proceed with caution, but likely safe."
+
+    reason = " | ".join(warnings + url_analysis[:2])
+
+    return {
+        "threat_level": threat_level,
+        "reason": reason,
+        "recommendation": recommendation
+    }
+

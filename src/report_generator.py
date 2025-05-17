@@ -8,6 +8,22 @@ from openpyxl.styles import Font, Alignment, Border, Side
 from openpyxl import load_workbook
 from src.utils import flatten_list_to_string, ensure_output_dir, get_timestamped_filename
 
+# At the top of export_to_excel()
+summary = parsed_data.get("summary", {})
+summary_lines = {
+    "threat_level": summary.get("threat_level", "N/A"),
+    "recommendation": summary.get("recommendation", "N/A"),
+    "reason": summary.get("reason", "N/A")
+}
+
+# Combine summary + rest of parsed data
+combined_data = {**summary_lines, **parsed_data}
+formatted_data = {
+    key: flatten_list_to_string(value)
+    for key, value in combined_data.items()
+}
+
+
 def export_to_excel(parsed_data, output_dir="output"):
     ensure_output_dir(output_dir)
 
