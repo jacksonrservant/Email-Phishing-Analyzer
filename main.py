@@ -1,5 +1,3 @@
-# main.py
-
 import argparse
 import json
 import os
@@ -8,8 +6,8 @@ from src.email_parser import parse_email
 from src.analyzer import analyze, generate_summary
 from src.url_checker import analyze_urls
 from src.report_generator import export_to_excel
-from src.utils import ensure_output_dir, get_timestamped_filename
 from src.pdf_generator import export_to_pdf
+from src.utils import get_timestamp, create_run_output_folder
 
 def main():
     parser = argparse.ArgumentParser(
@@ -35,23 +33,26 @@ def main():
     print("[+] Generating summary assessment...")
     parsed_data["summary"] = generate_summary(parsed_data)
 
+    # 🔐 Create timestamp and output folder once
+    timestamp = get_timestamp()
+    run_output_dir = create_run_output_folder(timestamp=timestamp)
+
     print("[+] Exporting Excel report...")
-    export_to_excel(parsed_data)
+    export_to_excel(parsed_data, output_dir=run_output_dir, timestamp=timestamp)
 
     print("[+] Saving JSON report...")
-    ensure_output_dir("output")
-    json_path = os.path.join("output", get_timestamped_filename(extension="json"))
+    json_path = os.path.join(run_output_dir, f"email_analysis_{timestamp}.json")
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(parsed_data, f, indent=2)
         print(f"[✓] JSON report saved to {json_path}")
 
     print("[+] Exporting PDF report...")
-    export_to_pdf(parsed_data)
-
+    export_to_pdf(parsed_data, output_dir=run_output_dir, timestamp=timestamp)
 
     print("[✓] Analysis complete.")
 
 if __name__ == "__main__":
     main()
+
 
 
