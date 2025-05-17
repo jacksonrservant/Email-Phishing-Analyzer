@@ -6,9 +6,10 @@ from reportlab.lib.units import inch
 from datetime import datetime
 import os
 
-def export_to_pdf(parsed_data, output_dir="output"):
+def export_to_pdf(parsed_data, output_dir, timestamp):
     os.makedirs(output_dir, exist_ok=True)
-    filename = f"email_analysis_{datetime.now().strftime('%Y-%m-%d_%H-%M')}.pdf"
+
+    filename = f"email_analysis_{timestamp}.pdf"
     filepath = os.path.join(output_dir, filename)
 
     c = canvas.Canvas(filepath, pagesize=LETTER)
@@ -22,7 +23,7 @@ def export_to_pdf(parsed_data, output_dir="output"):
     c.setFont("Helvetica", 10)
     c.drawString(1 * inch, height - 1.3 * inch, f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
-    # Layout
+    # Content layout setup
     y = height - 1.6 * inch
     line_height = 12
     max_width = width - 1.5 * inch
@@ -52,7 +53,7 @@ def export_to_pdf(parsed_data, output_dir="output"):
         lines.append(current_line)
         return lines
 
-    # Fields to include
+    # Fields to include in the report
     fields_to_show = [
         ("Threat Level", parsed_data.get("summary", {}).get("threat_level", "N/A")),
         ("Recommendation", parsed_data.get("summary", {}).get("recommendation", "N/A")),
@@ -67,6 +68,7 @@ def export_to_pdf(parsed_data, output_dir="output"):
         ("URL Analysis", "\n".join(parsed_data.get("url_analysis", [])))
     ]
 
+    # Write fields to PDF
     for label, value in fields_to_show:
         if y < 1 * inch:
             c.showPage()
@@ -75,3 +77,4 @@ def export_to_pdf(parsed_data, output_dir="output"):
 
     c.save()
     print(f"[✓] PDF report saved to {filepath}")
+
