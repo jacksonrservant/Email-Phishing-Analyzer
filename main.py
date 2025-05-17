@@ -80,9 +80,9 @@ def print_analysis_report(file_path, metadata, auth_results, indicators):
 
     print("\n--- Verdict ---")
     if indicators or any(v != 'pass' for v in auth_results.values() if v):
-        print("⚠️  Suspicious email detected. Proceed with caution.")
+        print(" Suspicious email detected. Proceed with caution.")
     else:
-        print("✅ Email appears safe based on current analysis.")
+        print(" Email appears safe based on current analysis.")
 
 def main():
     file_path = "input_samples/suspicious_email.eml"  # change to your file path
