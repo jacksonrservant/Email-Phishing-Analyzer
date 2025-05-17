@@ -3,8 +3,9 @@
 import argparse
 import json
 import os
+
 from src.email_parser import parse_email
-from src.analyzer import analyze
+from src.analyzer import analyze, generate_summary
 from src.url_checker import analyze_urls
 from src.report_generator import export_to_excel
 from src.utils import ensure_output_dir, get_timestamped_filename
@@ -30,6 +31,9 @@ def main():
         for item in url_analysis
     ]
 
+    print("[+] Generating summary assessment...")
+    parsed_data["summary"] = generate_summary(parsed_data)
+
     print("[+] Exporting Excel report...")
     export_to_excel(parsed_data)
 
@@ -44,3 +48,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
