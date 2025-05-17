@@ -88,7 +88,97 @@ def export_to_excel(metadata, auth_results, indicators, verdict, export_path):
     row += 1
     for key, value in metadata.items():
         worksheet.write(row, 0, key)
-        worksheet.write(row, 1, value
+        worksheet.write(row, 1, value or "None")
+        row += 1
+
+    row += 1
+    worksheet.write(row, 0, "Authentication Results", bold)
+    row += 1
+    for key, value in auth_results.items():
+        worksheet.write(row, 0, key)
+        worksheet.write(row, 1, value or "Not found")
+        row += 1
+
+    row += 1
+    worksheet.write(row, 0, "Phishing Indicators", bold)
+    for ind in indicators:
+        row += 1
+        worksheet.write(row, 0, f"- {ind}")
+    if not indicators:
+        row += 1
+        worksheet.write(row, 0, "None found")
+
+    row += 2
+    worksheet.write(row, 0, "Verdict", bold)
+    worksheet.write(row, 1, verdict)
+
+    workbook.close()
+
+def export_to_pdf(metadata, auth_results, indicators, verdict, export_path):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    def write_section(title, lines):
+        pdf.set_font("Arial", style='B', size=12)
+        pdf.cell(200, 10, txt=title, ln=True)
+        pdf.set_font("Arial", size=12)
+        for line in lines:
+            pdf.multi_cell(0, 10, txt=line)
+
+    write_section("Email Metadata", [f"{k}: {v or 'None'}" for k, v in metadata.items()])
+    write_section("Authentication Results", [f"{k}: {v or 'Not found'}" for k, v in auth_results.items()])
+    write_section("Phishing Indicators", [f"- {ind}" for ind in indicators] if indicators else ["None found"])
+    write_section("Verdict", [verdict])
+
+    pdf.output(export_path)
+
+def print_analysis_report(file_path, metadata, auth_results, indicators, verdict):
+    print(f"\n📨 Analyzing: {file_path}")
+    print("\n--- Email Metadata ---")
+    for key, value in metadata.items():
+        print(f"{key}: {value}")
+
+    print("\n--- Authentication Results ---")
+    for method, result in auth_results.items():
+        print(f"{method}: {result if result else 'Not found'}")
+
+    print("\n--- Phishing Indicators ---")
+    if indicators:
+        for ind in indicators:
+            print(f"[!] {ind}")
+    else:
+        print("[✓] No strong phishing indicators found.")
+
+    print("\n--- Verdict ---")
+    print(f"{'⚠️  Suspicious email detected.' if '!' in verdict else '✅ Email appears safe.'}")
+
+def main():
+    input_path = "input_samples/suspicious_email.eml"
+    msg = load_eml_file(input_path)
+
+    if not msg:
+        return
+
+    metadata = extract_email_metadata(msg)
+    auth_results = extract_auth_results(metadata.get('Authentication-Results', ''))
+    indicators = analyze_phishing_indicators(msg)
+    verdict = "⚠️  Suspicious email detected. Proceed with caution." if indicators or any(v != 'pass' for v in auth_results.values() if v) else "✅ Email appears safe."
+
+    print_analysis_report(input_path, metadata, auth_results, indicators, verdict)
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    base_filename = f"{OUTPUT_DIR}/phishing_analysis_{timestamp}"
+
+    export_to_json(metadata, auth_results, indicators, verdict, base_filename + ".json")
+    export_to_excel(metadata, auth_results, indicators, verdict, base_filename + ".xlsx")
+    export_to_pdf(metadata, auth_results, indicators, verdict, base_filename + ".pdf")
+
+    print(f"\n[+] Reports exported to '{OUTPUT_DIR}/'")
+
+if __name__ == "__main__":
+    main()
+
 
 
 
